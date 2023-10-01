@@ -1,0 +1,42 @@
+# trigger:
+#   branches:
+#     include:
+
+
+variables:
+  - name: terraformWorkingDirectory
+    value: 'aks'
+    
+pool:
+  name: devtest-devops-yaml-use-VM
+
+      
+stages:
+- stage: Terraform
+  displayName: 'Terraform Deployment'
+  jobs:
+  - job: TerraformJob
+    displayName: 'Run Terraform'
+    steps:
+    - checkout: self
+
+    - script: |
+        cd $(terraformWorkingDirectory)
+        terraform init
+      displayName: 'Terraform Init'
+    
+    - script: |
+        cd $(terraformWorkingDirectory)
+        terraform plan
+      displayName: 'Terraform Plan'
+   
+    - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.x'
+      addToPath: true
+
+  - script: |
+        helm repo add nginx-stable https://helm.nginx.com/stable
+        helm repo update
+        helm install nginx-ingress nginx-stable/nginx-ingress
+    displayName: 'Install Nginx Ingress Controller'
